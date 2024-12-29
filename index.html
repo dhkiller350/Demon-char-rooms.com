@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo$n Chat rooms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #333; /* Dark grey background */
+            color: white; /* White text color */
+        }
+        #menu-container, #chat-container, #profile-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 10px;
+            border: 1px solid #444; /* Darker grey border */
+            background: #222; /* Black background */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        #menu-container {
+            display: block; /* Show menu by default */
+        }
+        #chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        #chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #444; /* Darker grey border */
+            padding: 10px;
+            background: #111; /* Darker black background */
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .message span {
+            font-weight: bold;
+        }
+        #message-input {
+            display: flex;
+            margin-top: 10px;
+        }
+        #message-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #444; /* Darker grey border */
+            border-radius: 5px;
+            outline: none;
+            background-color: #333; /* Dark grey background */
+            color: white; /* White text color */
+        }
+        #message-input button {
+            padding: 10px 15px;
+            background-color: #555; /* Grey button background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #message-input button:hover {
+            background-color: #666; /* Lighter grey on hover */
+        }
+        #open-chat-button, #create-profile-button {
+            padding: 10px 20px;
+            background-color: #555; /* Grey button background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 10px auto;
+        }
+        #open-chat-button:hover, #create-profile-button:hover {
+            background-color: #666; /* Lighter grey on hover */
+        }
+        #settings-icon {
+            cursor: pointer;
+            font-size: 20px;
+        }
+        #settings-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 30px;
+            background-color: #222; /* Black background */
+            border: 1px solid #444; /* Darker grey border */
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        #settings-dropdown a {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: white; /* White text color */
+        }
+        #settings-dropdown a:hover {
+            background-color: #333; /* Dark grey on hover */
+        }
+        #profile-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #555;
+            display: block;
+            margin: 10px auto;
+        }
+        #profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #555;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu-container">
+        <h2>Demons Chat</h2>
+        <button id="open-chat-button">Open Chat Room</button>
+        <button id="create-profile-button">Create Profile</button>
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Chat Room</h2>
+            <span id="settings-icon">&#9881;</span> <!-- Settings gear icon -->
+            <div id="settings-dropdown">
+                <a href="#" id="change-room">Change Room</a>
+                <a href="#" id="profile-settings">Profile Settings</a>
+                <a href="#" id="exit-to-menu">Exit</a>
+            </div>
+        </div>
+        <div id="chat-box"></div>
+        <div id="message-input">
+            <img id="profile-icon" src="#" alt="Profile Icon" />
+            <input type="text" id="username" placeholder="Your name" />
+            <input type="text" id="message" placeholder="Type a message" />
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <div id="profile-container">
+        <h2>Create/Edit Profile</h2>
+        <img id="profile-image" src="#" alt="Profile Image" />
+        <input type="file" id="profile-image-input" accept="image/*" />
+        <input type="text" id="profile-name" placeholder="Enter your name" />
+        <button id="save-profile-button">Save Profile</button>
+    </div>
+
+    <script>
+        const menuContainer = document.getElementById('menu-container');
+        const chatContainer = document.getElementById('chat-container');
+        const profileContainer = document.getElementById('profile-container');
+        const openChatButton = document.getElementById('open-chat-button');
+        const createProfileButton = document.getElementById('create-profile-button');
+        const settingsIcon = document.getElementById('settings-icon');
+        const settingsDropdown = document.getElementById('settings-dropdown');
+        const chatBox = document.getElementById('chat-box');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('send-button');
+        const changeRoomLink = document.getElementById('change-room');
+        const exitToMenuLink = document.getElementById('exit-to-menu');
+        const profileImage = document.getElementById('profile-image');
+        const profileImageInput = document.getElementById('profile-image-input');
+        const saveProfileButton = document.getElementById('save-profile-button');
+        const profileIcon = document.getElementById('profile-icon');
+        const profileNameInput = document.getElementById('profile-name');
+
+        // Initialize the chat messages array
+        let messages = [];
+
+        // Load messages from LocalStorage
+        function loadMessages() {
+            const storedMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+            chatBox.innerHTML = ''; // Clear chat box
+            storedMessages.forEach(msg => appendMessage(msg.username, msg.text));
+        }
+
+        // Append a message to the chat box
+        function appendMessage(username, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.innerHTML = `<span>${username}:</span> ${text}`;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+        }
+
+        // Save a message to LocalStorage
+        function saveMessage(username, text) {
+            const newMessage = { username, text };
+            messages.push(newMessage);
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+        }
+
+        // Send message function
+        function sendMessage() {
+            const username = usernameInput.value.trim();
+            const message = messageInput.value.trim();
+            if (!username || !message) return alert('Both fields are required!');
+            appendMessage(username, message);
+            saveMessage(username, message);
+            messageInput.value = ''; // Clear message field
+        }
+
+        // Handle send button click
+        sendButton.addEventListener('click', sendMessage);
+
+        // Allow Enter key to send message
+        messageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Listen for LocalStorage changes (cross-tab communication)
+        window.addEventListener('storage', () => {
+            loadMessages();
+        });
+
+        // Load messages on page load
+        loadMessages();
+
+        // Load profile image from LocalStorage
+        function loadProfileImage() {
+            const storedImage = localStorage.getItem('profileImage');
+            if (storedImage) {
+                profileImage.src = storedImage;
+                profileIcon.src = storedImage;
+            }
+        }
+
+        // Handle open chat button click
+        openChatButton.addEventListener('click', () => {
+            menuContainer.style.display = 'none';
+            chatContainer.style.display = 'block';
+            loadProfileImage(); // Load profile image when entering chat
+        });
+
+        // Handle create profile button click
+        createProfileButton.addEventListener('click', () => {
+            menuContainer.style.display = 'none';
+            profileContainer.style.display = 'block';
+            loadProfileImage(); // Load profile image when editing profile
+        });
+
+        // Handle save profile button click
+        saveProfileButton.addEventListener('click', () => {
+            const profileName = profileNameInput.value.trim();
+            if (!profileName) {
+                return alert('Please enter a name for your profile!');
+            }
+            localStorage.setItem('profileName', profileName);
+            alert('Profile saved!');
+            profileContainer.style.display = 'none';
+            chatContainer.style.display = 'block';
+            usernameInput.value = profileName; // Update the username input in chat
+        });
+
+        // Handle profile image input change
+        profileImageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = e.target.result;
+                    profileImage.src = imageData;
+                    profileIcon.src = imageData; // Update profile icon in chat
+                    localStorage.setItem('profileImage', imageData); // Save image to LocalStorage
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Toggle settings dropdown visibility
+        settingsIcon.addEventListener('click', () => {
+            settingsDropdown.style.display = settingsDropdown.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (event) => {
+            if (!settingsIcon.contains(event.target) && !settingsDropdown.contains(event.target)) {
+                settingsDropdown.style.display = 'none';
+            }
+        });
+
+        // Handle change room click
+        changeRoomLink.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default link behavior
+            localStorage.removeItem('chatMessages'); // Clear chat messages
+            chatBox.innerHTML = ''; // Clear chat box
+            alert('Room changed!'); // Optional: Notify user
+            loadMessages(); // Reload messages (will be empty)
+        });
+
+        // Handle exit to main menu click
+        exitToMenuLink.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default link behavior
+            chatContainer.style.display = 'none';
+            menuContainer.style.display = 'block';
+        });
+
+        // Handle profile settings click
+        document.getElementById('profile-settings').addEventListener('click', (event) => {
+            event.preventDefault();
+            chatContainer.style.display = 'none';
+            profileContainer.style.display = 'block';
+            loadProfileImage(); // Load profile image when editing profile
+        });
+        
+        // Load profile name from LocalStorage
+function loadProfileName() {
+    const storedName = localStorage.getItem('profileName');
+    if (storedName) {
+        usernameInput.value = storedName;
+    }
+}
+
+// Handle save profile button click
+saveProfileButton.addEventListener('click', () => {
+    const profileName = profileNameInput.value.trim();
+    if (!profileName) {
+        return alert('Please enter a name for your profile!');
+    }
+    localStorage.setItem('profileName', profileName);
+    alert('Profile saved!');
+    profileContainer.style.display = 'none';
+    chatContainer.style.display = 'block';
+    loadProfileName(); // Load profile name when entering chat
+});
+
+// Load profile name on page load
+loadProfileName();
+
+    </script>
+</body>
+</html>
